@@ -1,141 +1,86 @@
-import React, {useState} from "react";
-import {v4 as uuidv4} from "uuid";
-import "./App.css";
+import React from 'react'
+import { useState } from 'react'  
+import './App.css'
 
 const App = () => {
-  const [text, setText] = useState("")
-  const [todos, setTodos] = useState([])
-  const [editId, setEditId] = useState(null)
-  const [editText, setEditText] = useState("")
+  const [text, setText] = useState("")  
+  const [todos, setTodos] = useState([]) 
+  const [editingId, setEditingId] = useState(null)
 
-  const handleInput = (el) => { 
-    setText(el.target.value)
-  };
+  const handleInput = (e) => {
+    const newValue = e.target.value
+    console.log('Input value:', newValue) // Debug log
+    setText(newValue)
+  }
 
   const handleClick = () => {
-    if (text.trim() === "") return;
-    let newObj = {
-      id: uuidv4(),
-      todotext: text,
-      completed: false,
-      createdAt: new Date()
-    };
-    setTodos([...todos, newObj]);
-    setText("");
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleClick();
+    if (text.trim()) {  
+      setTodos([...todos, { id: Date.now(), text: text }])  
+      setText("")  
     }
-  };
+  }
 
-  const toggleComplete = (id) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? {...todo, completed: !todo.completed} : todo
-    ));
-  };
+  const handleDelete = (id) => {
+    setTodos(todos.filter(todo => todo.id !== id))
+  }
 
-  const deleteTodo = (id) => {
-    const todoElement = document.getElementById(id);
-    todoElement.classList.add('fade-out');
-    setTimeout(() => {
-      setTodos(todos.filter(todo => todo.id !== id));
-    }, 300);
-  };
+  const handleEdit = (id) => {
+    const todoToEdit = todos.find(todo => todo.id === id)
+    setText(todoToEdit.text)
+    setEditingId(id)
+  }
 
-  const startEdit = (todo) => {
-    setEditId(todo.id);
-    setEditText(todo.todotext);
-  };
-
-  const saveEdit = (id) => {
-    if (editText.trim() === "") return;
-    setTodos(todos.map(todo =>
-      todo.id === id ? {...todo, todotext: editText} : todo
-    ));
-    setEditId(null);
-    setEditText("");
-  };
+  const handleUpdate = () => {
+    if (text.trim()) {
+      setTodos(todos.map(todo => 
+        todo.id === editingId ? { ...todo, text: text } : todo
+      ))
+      setText("")
+      setEditingId(null)
+    }
+  }
 
   return (
-    <div className="app-wrapper">
-      <div className="todo-container">
-        <h1>✨ Task Manager</h1>
-        <div className="input-section">
-          <input 
-            type="text" 
-            value={text}
-            onChange={handleInput}
-            onKeyPress={handleKeyPress}
-            placeholder="What needs to be done?"
-          />
-          <button onClick={handleClick} className="add-btn">
-            Add Task
-          </button>
-        </div>
-        <div className="todos-list">
-          {todos.length === 0 ? (
-            <div className="empty-state">
-              <p>No tasks yet. Add one to get started! 🚀</p>
+    <div className="todo-container">
+      <h1 className="todo-header">Todo List</h1>
+      <div className="todo-input">
+        <input 
+          type="text" 
+          placeholder="Add a new task..." 
+          onChange={handleInput}
+          value={text}
+          autoComplete="off"
+          spellCheck="false"
+        />
+        {editingId ? (
+          <button onClick={handleUpdate}>Update Task</button>
+        ) : (
+          <button onClick={handleClick}>Add Task</button>
+        )}
+      </div>
+      <div className="todo-list">
+        {todos.map((todo) => (
+          <div key={todo.id} className="todo-item">
+            <p>{todo.text}</p>
+            <div className="todo-actions">
+              <button 
+                className="edit-btn"
+                onClick={() => handleEdit(todo.id)}
+              >
+                Edit
+              </button>
+              <button 
+                className="delete-btn"
+                onClick={() => handleDelete(todo.id)}
+              >
+                Delete
+              </button>
             </div>
-          ) : (
-            todos.map((todo) => (
-              <div key={todo.id} id={todo.id} className="todo-item fade-in">
-                {editId === todo.id ? (
-                  <div className="edit-section">
-                    <input
-                      type="text"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      className="edit-input"
-                      autoFocus
-                    />
-                    <button 
-                      className="save-btn"
-                      onClick={() => saveEdit(todo.id)}
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="todo-content">
-                      <input
-                        type="checkbox"
-                        checked={todo.completed}
-                        onChange={() => toggleComplete(todo.id)}
-                        className="checkbox"
-                      />
-                      <span 
-                        className={`todo-text ${todo.completed ? 'completed' : ''}`}
-                      >
-                        {todo.todotext}
-                      </span>
-                    </div>
-                    <div className="button-group">
-                      <button 
-                        className="edit-btn"
-                        onClick={() => startEdit(todo)}
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="delete-btn"
-                        onClick={() => deleteTodo(todo.id)}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
